@@ -2,7 +2,7 @@ require('normalize.css/normalize.css');
 require('styles/App.scss');
 
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from  'react-dom'
 
 // 获取图片相关的数据
 var imageDatas = require('../data/imageDatas.json');
@@ -11,16 +11,19 @@ var imageDatas = require('../data/imageDatas.json');
 imageDatas = (function genImageURL(imageDatasArr) {
   for (var i = 0, j = imageDatasArr.length; i < j; i++) {
     var singleImageData = imageDatasArr[i];
+
     singleImageData.imageURL = require('../images/' + singleImageData.fileName);
+
     imageDatasArr[i] = singleImageData;
   }
   return imageDatasArr;
 })(imageDatas);
 
 //构建单幅画的组件
-let ImgFigure = React.createClass({
-  render : function(){
-    return(
+
+class ImgFigure extends  React.Component {
+  render(){
+    return React.creatElement(
       <figure>
         <img src={this.props.data.imageURL} alt={this.props.data.title}/>
         <figcaption>
@@ -29,19 +32,18 @@ let ImgFigure = React.createClass({
       </figure>
     )
   }
-});
 
-let GalleryByReactApp = React.createClass({
-  render: function(){
+}
+
+class GalleryByReactApp extends React.Component {
+  render() {
     //声明两个组件用来包含所有的图片
     var controllerUnits = [],
-    imgFigures = [];
-
-    imageDatas.forEach(function(item,index){
-      imgFigures.push(<ImgFigure key={index} data={item}/>);
+      imgFigures = [];
+    imageDatas.forEach(function(value){
+      imgFigures.push(<imgFigure data={value}/>)
     })
-
-    return(
+    return React.createElement(
       <section className="stage" ref="stage">
         <section className="img-sec">
           {imgFigures}
@@ -52,8 +54,6 @@ let GalleryByReactApp = React.createClass({
       </section>
     );
   }
-});
-
-ReactDOM.render(<GalleryByReactApp /> , document.getElementById('app'));
-module.exports = GalleryByReactApp;
+}
+ReactDOM.render(React.createElement(GalleryByReactApp), document.getElementById('content'));
 
