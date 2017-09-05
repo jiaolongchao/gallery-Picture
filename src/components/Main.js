@@ -64,7 +64,7 @@ let GalleryByReactApp = React.createClass({
   * 重新布局所有图片
   * 指定居中排布哪一张图片
   * */
-  rearrage : function(centerIndex){
+  rearrange : function(centerIndex){
     var imgsArrangeArr = this.state.imgsArrangeArr,
         Constant = this.Constant,
         centerPos = Constant.centerPos,
@@ -77,7 +77,7 @@ let GalleryByReactApp = React.createClass({
         vPosRangeX = vPosRange.x,
 
         imgsArrangeTopArr = [], //用来存储我们布局在上侧图片的状态信息
-        topImgNum = Math.floor(Math.random() * 2), //取一个或者不取 值为0或1
+        topImgNum = Math.ceil(Math.random() * 2), //取一个或者不取 值为0或1
         topImgSpliceIndex = 0, //用来标记布局在上侧的图是在数组的哪个位置
         imgsArrangeCenterArr = imgsArrangeArr.splice(centerIndex,1);  //中心图片的状态
 
@@ -137,14 +137,14 @@ let GalleryByReactApp = React.createClass({
   //组件加载以后，为每张图片计算其位置的范围
   componentDidMount : function(){
     //拿到舞台的大小
-    var stageDOM = React.findDOMNode(this.refs.stage), //舞台
+    var stageDOM = ReactDOM.findDOMNode(this.refs.stage), //舞台
         stageW = stageDOM.scrollWidth,   //舞台大小
         stageH = stageDOM.scrollHeight,
         halfStageW = Math.ceil(stageW / 2),
         halfStageH = Math.ceil(stageH / 2);
 
     //拿到一个imgfigure的大小
-    var imgFigureDOM = React.findDOMNode(this.refs.imgFigure0),
+    var imgFigureDOM = ReactDOM.findDOMNode(this.refs.imgFigure0),
         imgW = imgFigureDOM.scrollWidth,
         imgH = imgFigureDOM.scrollHeight,
         halfImgW = Math.ceil(imgW / 2),
@@ -158,19 +158,20 @@ let GalleryByReactApp = React.createClass({
 
     //计算左侧 右侧区域图片的排布位置的取值范围
     this.Constant.hPosRange.leftSecX[0] = -halfImgW;
-    this.Constant.hPosRange.leftSecX[1] = halfStageW - halfImgW / 2*3;
+    this.Constant.hPosRange.leftSecX[1] = halfStageW - halfImgW *3;
     this.Constant.hPosRange.rightSecX[0] = halfStageW + halfImgW;
     this.Constant.hPosRange.rightSecX[1] = stageW - halfImgW;
     this.Constant.hPosRange.y[0] = -halfImgH;
     this.Constant.hPosRange.y[1] = stageH - halfImgH;
 
+    //计算上侧区域图片排位位置的取值范围
     this.Constant.vPosRange.topY[0] = -halfImgH;
     this.Constant.vPosRange.topY[1] = halfStageH - halfImgH * 3;
-    this.Constant.vPosRange.x[0] = halfImgW - imgW;
-    this.Constant.vPosRange.x[1] = halfImgW;
+    this.Constant.vPosRange.x[0] = halfStageW - imgW;
+    this.Constant.vPosRange.x[1] = halfStageW;
 
     //调用图片排布位置的方法
-    this.rearrage(0); //指定图片数组中的第一张居中
+    this.rearrange(0); //指定图片数组中的第一张居中
   },
   render: function(){
     //声明两个组件用来包含所有的图片
