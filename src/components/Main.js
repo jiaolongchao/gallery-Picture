@@ -23,9 +23,27 @@ imageDatas = (function genImageURL(imageDatasArr) {
 function getRangeRandom(low, high) {
   return Math.ceil(Math.random() * (high - low) + low);
 }
+/*
+* 获取0-30之间的任意一个正负值
+* */
+function get30DegRandom(){
+  return Math.random() > 0.5 ? '' : '-' + Math.ceil(Math.random() * 30)
+}
 
 //构建单幅画的组件
 let ImgFigure = React.createClass({
+  /*
+  * imgFigure的点击函数
+  */
+  handleClick : function(e){
+    if(this.props.arrange.isCenter){
+      this.props.inverse();
+    }else{
+      this.props.center();
+    }
+    e.stopPropagation();
+    e.preventDefault();
+  },
   render : function(){
     var styleObj = {};
     // 如果props属性中指定了这张图片的位置，则使用
@@ -33,11 +51,31 @@ let ImgFigure = React.createClass({
       styleObj = this.props.arrange.pos;
     }
 
+    //如果图片的旋转角度有值 并且不为0，添加旋转角度
+    if (this.props.arrange.rotate) {
+      (['MozTransform', 'msTransform', 'WebkitTransform', 'transform']).forEach(function (value) {
+        styleObj[value] = 'rotate(' + this.props.arrange.rotate + 'deg)';
+      }.bind(this));
+    }
+
+    if(this.props.arrange.isCenter){
+      styleObj.zIndex = 11;
+    }
+
+    //获取imgfigure的图片样式名称
+    var imgFigureClassName = 'img-figure';
+    imgFigureClassName += this.props.arrange.isInverse ? ' is-inverse' : '';
+
     return(
-      <figure className="img-figure" style={styleObj}>
+      <figure className={imgFigureClassName} style={styleObj} onClick={this.handleClick}>
         <img src={this.props.data.imageURL} alt={this.props.data.title}/>
         <figcaption>
           <h2 className="img-title">{this.props.data.title}</h2>
+          <div className="img-back" onClick={this.handleClick}>
+            <p>
+              {this.props.data.desc}
+            </p>
+          </div>
         </figcaption>
       </figure>
     )
@@ -60,6 +98,22 @@ let GalleryByReactApp = React.createClass({
       topY: [0, 0]
     }
   },
+
+  /*
+  * 翻转图片
+  * index输入当前被执行inverse操作的图片对应的图片信息数组的index值
+  * 本函数是一个闭包函数 ，其内renturn 一个真正被执行行的函数
+  * */
+  inverse : function (index) {
+    return function(){
+      var imgsArrangeArr = this.state.imgsArrangeArr;
+      imgsArrangeArr[index].isInverse = !imgsArrangeArr[index].isInverse;
+      this.setState({
+        imgsArrangeArr:imgsArrangeArr
+      });
+    }.bind(this)
+  },
+
   /*
   * 重新布局所有图片
   * 指定居中排布哪一张图片
@@ -81,8 +135,12 @@ let GalleryByReactApp = React.createClass({
         topImgSpliceIndex = 0, //用来标记布局在上侧的图是在数组的哪个位置
         imgsArrangeCenterArr = imgsArrangeArr.splice(centerIndex,1);  //中心图片的状态
 
-        //首先居中centerIndex的图片
-        imgsArrangeCenterArr[0].pos = centerPos;
+        //centerIndex居中图片的状态信息
+        imgsArrangeCenterArr[0] = {
+          pos : centerPos,
+          rotate : 0,
+          isCenter : true
+        }
 
         //取出要布局上侧图片的状态信息
         topImgSpliceIndex = Math.ceil( Math.random() * (imgsArrangeArr.length - topImgNum));
@@ -90,9 +148,13 @@ let GalleryByReactApp = React.createClass({
 
         //布局位于上侧的图片
         imgsArrangeTopArr.forEach(function(value,index){
-          imgsArrangeTopArr[index].pos = {
-            top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
-            left:getRangeRandom(vPosRangeX[0],vPosRangeX[1])
+          imgsArrangeTopArr[index] = {
+            pos : {
+              top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
+              left:getRangeRandom(vPosRangeX[0],vPosRangeX[1])
+            },
+            rotate: get30DegRandom(),
+            isCenter : false
           }
         });
 
@@ -107,9 +169,13 @@ let GalleryByReactApp = React.createClass({
             hPosRangeLORX = hPosRangeRightSecX;
           };
 
-          imgsArrangeArr[i].pos = {
-            top:getRangeRandom(hPosRangeY[0],hPosRangeY[1]),
-            left:getRangeRandom(hPosRangeLORX[0],hPosRangeLORX[1])
+          imgsArrangeArr[i] = {
+            pos : {
+              top:getRangeRandom(hPosRangeY[0],hPosRangeY[1]),
+              left:getRangeRandom(hPosRangeLORX[0],hPosRangeLORX[1])
+            },
+            rotate : get30DegRandom(),
+            isCenter : false
           };
         }
 
@@ -122,6 +188,16 @@ let GalleryByReactApp = React.createClass({
           imgsArrangeArr:imgsArrangeArr
         });
   },
+  /*
+   * 利用arrange函数， 居中对应index的图片
+   * @param index, 需要被居中的图片对应的图片信息数组的index值
+   * @returns {Function}
+   */
+  center : function(index){
+    return function (){
+      this.rearrange(index)
+    }.bind(this);
+  },
   getInitialState : function(){
     return {
       imgsArrangeArr : [ //初始化状态对象
@@ -129,7 +205,10 @@ let GalleryByReactApp = React.createClass({
           pos : {
             left : '0',
             top : '0'
-          }
+          },
+          rotate : 0, //旋转角度
+          isInverse : false, //用来表示图片的正反面 false 正面
+          isCenter : false //图片是否居中 fase不居中
         }*/
       ]
     }
@@ -184,10 +263,12 @@ let GalleryByReactApp = React.createClass({
           pos : { //初始化状态对象，定位到左上角
             left : 0,
             top : 0
-          }
+          },
+          rotate : 0,
+          isInverse : false
         }
       }
-      imgFigures.push(<ImgFigure key={index} data={item} ref={'imgFigure' + index} arrange = {this.state.imgsArrangeArr[index]}/>);
+      imgFigures.push(<ImgFigure key={index} data={item} ref={'imgFigure' + index} arrange = {this.state.imgsArrangeArr[index]} inverse={this.inverse(index)} center={this.center(index)}/>);
     }.bind(this))
 
     return(
